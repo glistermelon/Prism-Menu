@@ -910,67 +910,98 @@ PrismUIButton* PrismUIButton::create(HackItem* hack, Lang* lang) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PrismDynamicUIButton::test(CCObject*) {
-    abort();
+void PrismDynamicUIButton::test(CCObject* obj) {
+    typeinfo_cast<CCNode*>(obj)->setVisible(false);
 }
 
 bool PrismDynamicUIButton::init() {
 
-    auto label = SimpleTextArea::create(
-            "hack", "chatFont-uhd.fnt", 0.35f, 60.0f
+    if (!CCMenu::init()) return false;
+
+    CCSize size(60.0f, 8.0f);
+    CCRect sizeRect(0, 0, size.width, size.height);
+    float textPad = 2.0f;
+
+    m_label = SimpleTextArea::create(
+            "hack<", "chatFont-uhd.fnt", 0.35f, size.width - textPad
     ); // hardcoded scale ftw
 
     auto anchor = CCPoint(0.0f, 0.5f);
 
-    if (!label) return false;
-    label->setAnchorPoint(anchor);
-    label->setContentHeight(60.0f);
-    label->setAlignment(kCCTextAlignmentLeft);
+    if (!m_label) return false;
+    m_label->setAnchorPoint(anchor);
+    m_label->setContentHeight(size.height);
+    m_label->setAlignment(kCCTextAlignmentLeft);
+    m_label->setPosition(CCPoint(textPad, size.height / 2));
 
-    auto bgNormal = CCSprite::create("square.png", CCRect(0, 0, 60.0f, 8.0f));
-    auto bgSelected = CCSprite::create("square.png", CCRect(0, 0, 60.0f, 8.0f));
-    bgNormal->setColor({ .r = 40, .g = 40, .b = 40 });
-    bgSelected->setColor({ .r = 150, .g = 150, .b = 150 });
+    auto bgNormal = CCSprite::create("square.png", sizeRect);
+    auto bgSelected = CCSprite::create("square.png", sizeRect);
+    bgNormal->setColor({ .r = 50, .g = 50, .b = 50 });
+    bgSelected->setColor({ .r = 40, .g = 40, .b = 40 });
+    m_background = CCMenuItemSprite::create(
+            bgNormal, bgSelected, this, menu_selector(PrismDynamicUIButton::test)
+    );
 
-    auto bg = CCMenuItemToggler::create(bgNormal, bgSelected, this, menu_selector(PrismDynamicUIButton::test));
+    if (!m_background) return false;
 
-    if (!bg) return false;
+    m_background->setAnchorPoint(anchor);
+    m_background->setPositionY(size.height / 2);
 
-    bg->setAnchorPoint(anchor);
+    this->addChild(m_background);
+    this->addChild(m_label);
 
-    this->addChild(bg);
-    //this->addChild(label);
-
-    this->setContentSize(CCSize(60.0f, 8.0f));
+    this->setContentSize(size);
+    this->ignoreAnchorPointForPosition(false);
+    this->setAnchorPoint(CCPoint(0.0f, 1.0f));
 
     return true;
 
 }
-PrismDynamicUIButton* PrismDynamicUIButton::create(const std::function<void()>&) {
-    return PrismDynamicUIButton::create(nullptr, nullptr);
+
+PrismDynamicUIButton* PrismDynamicUIButton::create(const std::function<void()>& callback) {
+
 }
-PrismDynamicUIButton* PrismDynamicUIButton::create(HackItem*, Lang*) {
-    auto ret = new PrismDynamicUIButton();
-    if (ret && ret->init()) {
-        ret->autorelease();
-        return ret;
-    }
-    CC_SAFE_DELETE(ret);
-    return nullptr;
+
+PrismDynamicUIButton* PrismDynamicUIButton::create(HackItem* hackItem, Lang*) {
+
 }
 
 bool PrismDynamicUIMenu::init() {
+
+    if (!CCMenu::init()) return false;
+
     auto head = PrismDynamicUIButton::create([](){});
     if (!head) return false;
     this->addChild(head);
 
-    this->setAnchorPoint(CCPoint(0.5f, 1.0f));
-
-    this->registerWithTouchDispatcher();
-    this->setTouchEnabled(true);
-    cocos::handleTouchPriority(this);
+    this->updateButtons();
 
     return true;
+}
+
+void PrismDynamicUIMenu::updateButtons() {
+
+    auto children = this->getChildren();
+    auto childCount = children->count();
+
+    if (childCount == 0) {
+        this->setContentSize(CCSize(0, 0));
+        return;
+    }
+
+    auto firstButton = typeinfo_cast<CCNode*>(children->objectAtIndex(0)); // no firstObject; geode is failing me
+    float buttonHeight = firstButton->getContentHeight(); // assume all buttons have the same height
+    float menuHeight = (float)childCount * buttonHeight;
+    this->setContentSize(CCSize(firstButton->getContentWidth(), menuHeight));
+
+    for (int i = 0; i < childCount; ++i) {
+        auto button = typeinfo_cast<CCNode*>(children->objectAtIndex(i));
+        button->setPosition(CCPoint(0.0f, menuHeight - buttonHeight * (float)i));
+    }
+
+    this->setAnchorPoint(CCPoint(0.0f, 1.0f));
+    this->ignoreAnchorPointForPosition(false);
+
 }
 
 PrismDynamicUIMenu* PrismDynamicUIMenu::create() {
@@ -991,24 +1022,18 @@ bool PrismDynamicUI::init() {
     if (!menu) return false;
     menu->setPosition(CCScene::get()->getContentSize() / 2);
 
-    PrismDynamicUIButton* firstButton = nullptr;
+    std::vector<PrismDynamicUIButton*> buttons;
     for (size_t i = 0; i < 5; ++i) {
         auto button = PrismDynamicUIButton::create([](){});
         if (!button) return false;
-        if (!firstButton) firstButton = button;
+        buttons.push_back(button);
         menu->addChild(button);
     }
-    menu->setContentWidth(firstButton->getContentWidth());
-    menu->setContentHeight((float)menu->getChildrenCount() * firstButton->getContentHeight());
-    menu->alignItemsVerticallyWithPadding(0.0f);
+    menu->updateButtons();
 
     this->addChild(menu);
 
     this->setZOrder(500);
-
-    this->registerWithTouchDispatcher();
-    this->setTouchEnabled(true);
-    cocos::handleTouchPriority(this);
 
     return true;
 }

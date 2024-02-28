@@ -75,9 +75,15 @@ class PrismUI : public FLAlertLayer {
         static PrismUI* create();
 };
 
-class PrismDynamicUIButton : public CCMenuItem {
+#include <Geode/ui/TextArea.hpp>
+
+class PrismDynamicUIButton : public CCMenu {
+    SimpleTextArea* m_label;
+    CCMenuItemSprite* m_background;
+
     void test(CCObject*);
-    virtual bool init();
+    virtual bool initAsLabel();
+    virtual bool init(HackItem*);
 public:
     static PrismDynamicUIButton* create(HackItem* hack, Lang* lang);
     static PrismDynamicUIButton* create(const std::function<void()>& callback);
@@ -86,6 +92,7 @@ public:
 class PrismDynamicUIMenu : public CCMenu {
     virtual bool init();
 public:
+    void updateButtons();
     static PrismDynamicUIMenu* create();
 };
 
