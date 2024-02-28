@@ -901,3 +901,118 @@ PrismUIButton* PrismUIButton::create(HackItem* hack, Lang* lang) {
     CC_SAFE_DELETE(pRet);
     return nullptr;
 };
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
+
+void PrismDynamicUIButton::test(CCObject*) {
+    abort();
+}
+
+bool PrismDynamicUIButton::init() {
+
+    auto label = SimpleTextArea::create(
+            "hack", "chatFont-uhd.fnt", 0.35f, 60.0f
+    ); // hardcoded scale ftw
+
+    auto anchor = CCPoint(0.0f, 0.5f);
+
+    if (!label) return false;
+    label->setAnchorPoint(anchor);
+    label->setContentHeight(60.0f);
+    label->setAlignment(kCCTextAlignmentLeft);
+
+    auto bgNormal = CCSprite::create("square.png", CCRect(0, 0, 60.0f, 8.0f));
+    auto bgSelected = CCSprite::create("square.png", CCRect(0, 0, 60.0f, 8.0f));
+    auto bgDisabled = CCSprite::create("square.png", CCRect(0, 0, 60.0f, 8.0f));
+    bgNormal->setColor({ .r = 40, .g = 40, .b = 40 });
+    bgSelected->setColor({ .r = 150, .g = 150, .b = 150 });
+    bgDisabled->setColor({ .r = 0, .g = 0, .b = 0 });
+    auto bg = CCMenuItemSprite::create(bgNormal, bgSelected, bgNormal,
+                                       this, menu_selector(PrismDynamicUIButton::test)
+                                       );
+    if (!bg) return false;
+    bg->setAnchorPoint(anchor);
+
+    this->addChild(bg);
+    this->addChild(label);
+
+    this->setContentSize(CCSize(60.0f, 8.0f));
+
+    return true;
+
+}
+PrismDynamicUIButton* PrismDynamicUIButton::create(const std::function<void()>&) {
+    return PrismDynamicUIButton::create(nullptr, nullptr);
+}
+PrismDynamicUIButton* PrismDynamicUIButton::create(HackItem*, Lang*) {
+    auto ret = new PrismDynamicUIButton();
+    if (ret && ret->init()) {
+        ret->autorelease();
+        return ret;
+    }
+    CC_SAFE_DELETE(ret);
+    return nullptr;
+}
+
+bool PrismDynamicUIMenu::init() {
+    auto head = PrismDynamicUIButton::create([](){});
+    if (!head) return false;
+    this->addChild(head);
+    return true;
+}
+
+PrismDynamicUIMenu* PrismDynamicUIMenu::create() {
+    auto ret = new PrismDynamicUIMenu();
+    if (ret && ret->init()) {
+        ret->autorelease();
+        return ret;
+    }
+    CC_SAFE_DELETE(ret);
+    return nullptr;
+}
+
+bool PrismDynamicUI::init() {
+    if (!this->initWithColor({ 0, 0, 0, 105 })) return false;
+    this->registerWithTouchDispatcher();
+    cocos::handleTouchPriority(this);
+    this->setKeypadEnabled(true);
+    this->setTouchEnabled(true);
+    this->setID("prism-menu");
+
+    auto menu = PrismDynamicUIMenu::create();
+    if (!menu) return false;
+    menu->setPosition(CCScene::get()->getContentSize() / 2);
+
+    PrismDynamicUIButton* firstButton = nullptr;
+    for (size_t i = 0; i < 5; ++i) {
+        auto button = PrismDynamicUIButton::create([](){});
+        if (!button) return false;
+        if (!firstButton) firstButton = button;
+        menu->addChild(button);
+    }
+    menu->setContentWidth(firstButton->getContentWidth());
+    menu->setContentHeight((float)menu->getChildrenCount() * firstButton->getContentHeight());
+    menu->alignItemsVerticallyWithPadding(0.0f);
+
+    this->addChild(menu);
+
+    this->setZOrder(500);
+
+    return true;
+}
+
+PrismDynamicUI* PrismDynamicUI::create() {
+    auto ret = new PrismDynamicUI();
+    if (ret && ret->init()) {
+        ret->autorelease();
+        return ret;
+    }
+    CC_SAFE_DELETE(ret);
+    return nullptr;
+}

@@ -109,9 +109,10 @@ class $modify(CCKeyboardDispatcher) {
             } else {
                 auto prismUIExists = CCScene::get()->getChildByID("prism-menu");
                 if (prismUIExists == nullptr) {
-                    PrismUI::create()->show();
+                    auto p = PrismDynamicUI::create();
+                    CCScene::get()->addChild(p);
                 } else {
-                    static_cast<PrismUI*>(prismUIExists)->onClose(CCNode::create());
+                    //static_cast<PrismUI*>(prismUIExists)->onClose(CCNode::create());
                 }
             }
             return true;

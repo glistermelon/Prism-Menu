@@ -74,3 +74,24 @@ class PrismUI : public FLAlertLayer {
         static matjson::Object GetTheme();
         static PrismUI* create();
 };
+
+class PrismDynamicUIButton : public CCMenuItem {
+    void test(CCObject*);
+    virtual bool init();
+public:
+    static PrismDynamicUIButton* create(HackItem* hack, Lang* lang);
+    static PrismDynamicUIButton* create(const std::function<void()>& callback);
+};
+
+class PrismDynamicUIMenu : public CCMenu {
+    virtual bool init();
+public:
+    static PrismDynamicUIMenu* create();
+};
+
+class PrismDynamicUI : public CCLayerColor {
+protected:
+    virtual bool init();
+public:
+    static PrismDynamicUI* create();
+};
