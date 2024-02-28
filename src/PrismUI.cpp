@@ -929,18 +929,17 @@ bool PrismDynamicUIButton::init() {
 
     auto bgNormal = CCSprite::create("square.png", CCRect(0, 0, 60.0f, 8.0f));
     auto bgSelected = CCSprite::create("square.png", CCRect(0, 0, 60.0f, 8.0f));
-    auto bgDisabled = CCSprite::create("square.png", CCRect(0, 0, 60.0f, 8.0f));
     bgNormal->setColor({ .r = 40, .g = 40, .b = 40 });
     bgSelected->setColor({ .r = 150, .g = 150, .b = 150 });
-    bgDisabled->setColor({ .r = 0, .g = 0, .b = 0 });
-    auto bg = CCMenuItemSprite::create(bgNormal, bgSelected, bgNormal,
-                                       this, menu_selector(PrismDynamicUIButton::test)
-                                       );
+
+    auto bg = CCMenuItemToggler::create(bgNormal, bgSelected, this, menu_selector(PrismDynamicUIButton::test));
+
     if (!bg) return false;
+
     bg->setAnchorPoint(anchor);
 
     this->addChild(bg);
-    this->addChild(label);
+    //this->addChild(label);
 
     this->setContentSize(CCSize(60.0f, 8.0f));
 
@@ -964,6 +963,13 @@ bool PrismDynamicUIMenu::init() {
     auto head = PrismDynamicUIButton::create([](){});
     if (!head) return false;
     this->addChild(head);
+
+    this->setAnchorPoint(CCPoint(0.5f, 1.0f));
+
+    this->registerWithTouchDispatcher();
+    this->setTouchEnabled(true);
+    cocos::handleTouchPriority(this);
+
     return true;
 }
 
@@ -979,10 +985,6 @@ PrismDynamicUIMenu* PrismDynamicUIMenu::create() {
 
 bool PrismDynamicUI::init() {
     if (!this->initWithColor({ 0, 0, 0, 105 })) return false;
-    this->registerWithTouchDispatcher();
-    cocos::handleTouchPriority(this);
-    this->setKeypadEnabled(true);
-    this->setTouchEnabled(true);
     this->setID("prism-menu");
 
     auto menu = PrismDynamicUIMenu::create();
@@ -1003,6 +1005,10 @@ bool PrismDynamicUI::init() {
     this->addChild(menu);
 
     this->setZOrder(500);
+
+    this->registerWithTouchDispatcher();
+    this->setTouchEnabled(true);
+    cocos::handleTouchPriority(this);
 
     return true;
 }
