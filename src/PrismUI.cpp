@@ -626,14 +626,6 @@ void PrismUI::RegenCategory() {
             break;
         }
     }
-    /*for (auto it = jsonArray.end() - 1; it != jsonArray.begin() - 1; it--) {
-        const auto& obj = *it;
-        std::string name = obj.get<std::string>("name");
-        HackItem* hack = Hacks::getHack(name);
-        if (hack != nullptr) {
-            CreateHackItem(hack);
-        }
-    }*/
     for (auto it = jsonArray.begin(); it != jsonArray.end(); it++) {
         const auto& obj = *it;
         std::string name = obj.get<std::string>("name");
@@ -914,25 +906,34 @@ void PrismDynamicUIButton::test(CCObject* obj) {
     typeinfo_cast<CCNode*>(obj)->setVisible(false);
 }
 
-bool PrismDynamicUIButton::init() {
+bool PrismDynamicUIButton::init(HackItem* hack) {
 
     if (!CCMenu::init()) return false;
 
     CCSize size(60.0f, 8.0f);
     CCRect sizeRect(0, 0, size.width, size.height);
-    float textPad = 2.0f;
+    float textPadLeft = 2.0f;
+    float textPadRight = !hack || hack->type == "bool" ? 0.0f : 0.4f * size.width;
 
-    m_label = SimpleTextArea::create(
-            "hack<", "chatFont-uhd.fnt", 0.35f, size.width - textPad
-    ); // hardcoded scale ftw
+    std::string hackName = hack ? hack->name : "Label";
+
+    CCSize labelSize(size);
+    labelSize.width -= textPadLeft + textPadRight;
+    //m_label = CCLabelTTF::create(
+    //        hackName.c_str(), "Code Saver", 4, labelSize,
+    //        kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter
+    //);
+    // HONESTLY JUST GO BACK TO TTF; only use this dogshiz for size calculation
+    m_label = SimpleTextArea::create(hackName.c_str(), "PrismMenu.fnt", 0.7f, labelSize.width);
+    while (m_label->getLines().size() > 1) m_label->setScale(m_label->getScale() - 0.5f);
 
     auto anchor = CCPoint(0.0f, 0.5f);
 
     if (!m_label) return false;
     m_label->setAnchorPoint(anchor);
     m_label->setContentHeight(size.height);
-    m_label->setAlignment(kCCTextAlignmentLeft);
-    m_label->setPosition(CCPoint(textPad, size.height / 2));
+    //m_label->setAlignment(kCCTextAlignmentLeft);
+    m_label->setPosition(CCPoint(textPadLeft, size.height / 2));
 
     auto bgNormal = CCSprite::create("square.png", sizeRect);
     auto bgSelected = CCSprite::create("square.png", sizeRect);
@@ -943,6 +944,13 @@ bool PrismDynamicUIButton::init() {
     );
 
     if (!m_background) return false;
+
+    if (!hack) {
+        m_label->setColor({ 255, 255, 255 });
+        //m_label->setHorizontalAlignment(kCCTextAlignmentCenter);
+        bgNormal->setColor({ 60, 60, 255 });
+        bgSelected->setColor({ 60, 60, 255 });
+    }
 
     m_background->setAnchorPoint(anchor);
     m_background->setPositionY(size.height / 2);
@@ -959,11 +967,23 @@ bool PrismDynamicUIButton::init() {
 }
 
 PrismDynamicUIButton* PrismDynamicUIButton::create(const std::function<void()>& callback) {
-
+    auto ret = new PrismDynamicUIButton();
+    if (ret && ret->init(nullptr)) {
+        ret->autorelease();
+        return ret;
+    }
+    CC_SAFE_DELETE(ret);
+    return nullptr;
 }
 
-PrismDynamicUIButton* PrismDynamicUIButton::create(HackItem* hackItem, Lang*) {
-
+PrismDynamicUIButton* PrismDynamicUIButton::create(HackItem* hack) {
+    auto ret = new PrismDynamicUIButton();
+    if (ret && ret->init(hack)) {
+        ret->autorelease();
+        return ret;
+    }
+    CC_SAFE_DELETE(ret);
+    return nullptr;
 }
 
 bool PrismDynamicUIMenu::init() {
@@ -1015,25 +1035,21 @@ PrismDynamicUIMenu* PrismDynamicUIMenu::create() {
 }
 
 bool PrismDynamicUI::init() {
-    if (!this->initWithColor({ 0, 0, 0, 105 })) return false;
+    if (!CCLayer::init()) return false;
     this->setID("prism-menu");
 
     auto menu = PrismDynamicUIMenu::create();
     if (!menu) return false;
     menu->setPosition(CCScene::get()->getContentSize() / 2);
 
-    std::vector<PrismDynamicUIButton*> buttons;
-    for (size_t i = 0; i < 5; ++i) {
-        auto button = PrismDynamicUIButton::create([](){});
+    for (auto& hack : allHacks) {
+        auto button = PrismDynamicUIButton::create(&hack);
         if (!button) return false;
-        buttons.push_back(button);
         menu->addChild(button);
     }
     menu->updateButtons();
 
     this->addChild(menu);
-
-    this->setZOrder(500);
 
     return true;
 }

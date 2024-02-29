@@ -82,10 +82,9 @@ class PrismDynamicUIButton : public CCMenu {
     CCMenuItemSprite* m_background;
 
     void test(CCObject*);
-    virtual bool initAsLabel();
     virtual bool init(HackItem*);
 public:
-    static PrismDynamicUIButton* create(HackItem* hack, Lang* lang);
+    static PrismDynamicUIButton* create(HackItem* hack);
     static PrismDynamicUIButton* create(const std::function<void()>& callback);
 };
 
@@ -96,7 +95,7 @@ public:
     static PrismDynamicUIMenu* create();
 };
 
-class PrismDynamicUI : public CCLayerColor {
+class PrismDynamicUI : public CCLayer {
 protected:
     virtual bool init();
 public:
