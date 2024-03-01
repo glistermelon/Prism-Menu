@@ -67,7 +67,7 @@ struct HackItem {
     std::string type;
     std::string category;
     matjson::Array opcodes;
-    HackValue value;
+    HackValue value, defaultValue;
     matjson::Value data = {};
     bool focused = false;
 };
@@ -204,7 +204,7 @@ class Hacks {
                         obj.get<std::string>("type"),
                         category,
                         obj.get<matjson::Array>("opcodes"),
-                        false
+                        false, false
                     };
                     item.data = obj;
                     if (Hacks::Settings::settingContainsHack(settings, name) && !reset) {
@@ -217,28 +217,36 @@ class Hacks {
                     auto type = obj.get<std::string>("type");
                     bool settingExists = false;
                     HackValue value(new HackValue(false));
+                    HackValue defaultValue(false);
                     if (type == "bool") {
+                        defaultValue = HackValue(obj.get<bool>("default"));
                         if (Hacks::Settings::settingContainsHack(settings, name) && !reset) {
                             value = Hacks::Settings::getSettingValue(settings, name).as_bool();
                             settingExists = true;
                         } else {
-                            value = HackValue(obj.get<bool>("default"));
+                            value = defaultValue;
                         }
                     } else if (type == "int" || type == "dropdown") {
+                        defaultValue = HackValue(obj.get<int>("default"));
                         if (Hacks::Settings::settingContainsHack(settings, name) && !reset) {
                             value = Hacks::Settings::getSettingValue(settings, name).as_int();
                             settingExists = true;
                         } else {
-                            value = HackValue(obj.get<int>("default"));
+                            value = defaultValue;
                         }
                     } else if (type == "float") {
+                        defaultValue = HackValue(static_cast<float>(obj.get<double>("default")));
                         if (Hacks::Settings::settingContainsHack(settings, name) && !reset) {
                             value = static_cast<float>(Hacks::Settings::getSettingValue(settings, name).as_double());
                             settingExists = true;
                         } else {
-                            value = HackValue(static_cast<float>(obj.get<double>("default")));
+                            value = defaultValue;
                         }
                     } else if (type == "string") {
+                        std::string defaultStr = obj.get<std::string>("default");
+                        char* defaultCStr = new char[defaultStr.length() + 1];
+                        std::memcpy(defaultCStr, defaultStr.c_str(), defaultStr.length());
+                        defaultValue = HackValue(HackValue(defaultCStr));
                         if (Hacks::Settings::settingContainsHack(settings, name) && !reset) {
                             std::string val = Hacks::Settings::getSettingValue(settings, name).as_string();
                             char* charVal = new char[val.length() + 1];
@@ -246,10 +254,7 @@ class Hacks {
                             value = HackValue(charVal);
                             settingExists = true;
                         } else {
-                            std::string val = obj.get<std::string>("default");
-                            char* charVal = new char[val.length() + 1];
-                            std::strcpy(charVal, val.c_str());
-                            value = HackValue(charVal);
+                            value = defaultValue;
                         }
                     } else {
                         value = HackValue(new HackValue(false));
@@ -261,7 +266,7 @@ class Hacks {
                         obj.get<std::string>("type"),
                         category,
                         obj.get<matjson::Array>("opcodes"),
-                        value
+                        value, defaultValue
                     };
                     item.data = obj;
                     if (!settingExists) {

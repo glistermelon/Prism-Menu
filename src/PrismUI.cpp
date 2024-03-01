@@ -902,13 +902,39 @@ PrismUIButton* PrismUIButton::create(HackItem* hack, Lang* lang) {
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 
-void PrismDynamicUIButton::test(CCObject* obj) {
-    typeinfo_cast<CCNode*>(obj)->setVisible(false);
+void PrismDynamicUIButton::onClick(CCObject*) {
+    if (!m_hack) return;
+    std::string type = m_hack->type;
+    bool enabled = false;
+    if (type == "bool") {
+        enabled = !m_hack->value.boolValue;
+        m_hack->value.boolValue = enabled;
+    }
+    else if (type == "float") {
+        auto newValue = promptForNum<float>();
+        m_hack->value.floatValue = newValue;
+        enabled = newValue != m_hack->defaultValue.floatValue;
+    }
+    else if (type == "int") {
+        auto newValue = promptForNum<int>();
+        m_hack->value.intValue = newValue;
+        enabled = newValue != m_hack->defaultValue.intValue;
+    }
+    if (enabled) {
+        m_label->setColor({ 0, 0, 255, 255 });
+        if (m_icon) m_icon->setColor({ 0, 0, 255 });
+    }
+    else {
+        m_label->setColor({ 255, 255, 255, 255});
+        if (m_icon) m_icon->setColor({ 150, 150, 150 });
+    }
 }
 
 bool PrismDynamicUIButton::init(HackItem* hack) {
 
     if (!CCMenu::init()) return false;
+
+    m_hack = hack;
 
     CCSize size(70.0f, 8.0f);
     CCRect sizeRect(0, 0, size.width, size.height);
@@ -925,6 +951,7 @@ bool PrismDynamicUIButton::init(HackItem* hack) {
             icon = CCSprite::create("dropdown.png"_spr);
     }
     if (icon) {
+        m_icon = icon;
         icon->setScale((size.height - iconPad * 2) / icon->getContentHeight());
         icon->setAnchorPoint(CCPoint(0.0f, 0.0f));
         icon->setPosition(CCPoint(iconPad, iconPad));
@@ -951,7 +978,7 @@ bool PrismDynamicUIButton::init(HackItem* hack) {
     bgNormal->setColor({ .r = 50, .g = 50, .b = 50 });
     bgSelected->setColor({ .r = 40, .g = 40, .b = 40 });
     m_background = CCMenuItemSprite::create(
-            bgNormal, bgSelected, this, menu_selector(PrismDynamicUIButton::test)
+            bgNormal, bgSelected, this, menu_selector(PrismDynamicUIButton::onClick)
     );
 
     if (!m_background) return false;

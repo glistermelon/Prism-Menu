@@ -81,8 +81,11 @@ class PrismDynamicUIButton : public CCMenu {
 protected:
     SimpleTextArea* m_label;
     CCMenuItemSprite* m_background;
+    CCSprite* m_icon = nullptr;
+    HackItem* m_hack;
 
-    void test(CCObject*);
+    void onClick(CCObject*);
+    template <class T> T promptForNum() { return 5; }
     virtual bool init(HackItem*);
 public:
     static PrismDynamicUIButton* create(HackItem* hack);
