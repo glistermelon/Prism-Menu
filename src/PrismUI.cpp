@@ -978,13 +978,24 @@ bool PrismDynamicUILabel::init(PrismDynamicUIMenu* menu, std::string text) {
     return true;
 }
 
+bool PrismDynamicUILabel::containsPoint(CCPoint point) {
+    log::debug("CHECKING FOR CONTAINMENT");
+    auto p = convertToWorldSpace(CCPoint(0, 0));
+    log::debug("{} >= {}", point.x, p.x);
+    log::debug("{} <= {}", point.x, p.x + this->getScaledContentSize().width);
+    log::debug("{} >= {}", point.y, p.y);
+    log::debug("{} <= {}", point.y, p.y - this->getScaledContentSize().height);
+    CCRect rect = { .origin = p, .size = this->getScaledContentSize() }
+    return rect.containsPoint(point);
+}
+
 bool PrismDynamicUILabel::ccTouchBegan(CCTouch* touch, CCEvent*) {
-    m_dragging = this->boundingBox().containsPoint(touch->getLocation());
+    m_dragging = this->containsPoint(touch->getLocation());
     return true;
 }
 
 void PrismDynamicUILabel::ccTouchEnded(CCTouch* touch, CCEvent*) {
-    if (m_dragging && this->boundingBox().containsPoint(touch->getLocation()))
+    if (m_dragging && this->containsPoint(touch->getLocation()));
         m_dragging = false;
 }
 
@@ -993,9 +1004,6 @@ void PrismDynamicUILabel::ccTouchCancelled(CCTouch* p0, CCEvent* p1) {
 }
 
 void PrismDynamicUILabel::ccTouchMoved(CCTouch* touch, CCEvent*) {
-    std::stringstream s;
-    s << m_menu->getPositionX() << ", " << m_menu->getPosition(Y) << " vs ";
-    s << touch->getPositionX() << ", " << touch->getPosition(Y);
     if (m_dragging) m_menu->setPosition(m_menu->getPosition() + touch->getDelta());
 }
 

@@ -99,6 +99,7 @@ class PrismDynamicUILabel : public PrismDynamicUIButton {
     PrismDynamicUIMenu* m_menu;
     bool m_dragging = false;
     virtual bool init(PrismDynamicUIMenu*, std::string);
+    bool containsPoint(CCPoint);
 public:
     virtual bool ccTouchBegan(CCTouch*, CCEvent*);
     virtual void ccTouchEnded(CCTouch*, CCEvent*);
