@@ -25,7 +25,8 @@
             		"resources/themes.json",
             		"resources/hacks/README.md",
             		"resources/hacks/*.json",
-            		"resources/langs/*.json"
+            		"resources/langs/*.json",
+			"resources/hashtag.png"
 		],
         "fonts": {
             "PrismMenu": {

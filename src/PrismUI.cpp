@@ -910,30 +910,35 @@ bool PrismDynamicUIButton::init(HackItem* hack) {
 
     if (!CCMenu::init()) return false;
 
-    CCSize size(60.0f, 8.0f);
+    CCSize size(70.0f, 8.0f);
     CCRect sizeRect(0, 0, size.width, size.height);
-    float textPadLeft = 2.0f;
-    float textPadRight = !hack || hack->type == "bool" ? 0.0f : 0.4f * size.width;
+    float iconPad = 1.2f;
 
-    std::string hackName = hack ? hack->name : "Label";
+    std::string hackName = hack ? hack->name : "LABEL";
 
-    CCSize labelSize(size);
-    labelSize.width -= textPadLeft + textPadRight;
-    //m_label = CCLabelTTF::create(
-    //        hackName.c_str(), "Code Saver", 4, labelSize,
-    //        kCCTextAlignmentLeft, kCCVerticalTextAlignmentCenter
-    //);
-    // HONESTLY JUST GO BACK TO TTF; only use this dogshiz for size calculation
-    m_label = SimpleTextArea::create(hackName.c_str(), "PrismMenu.fnt", 0.7f, labelSize.width);
-    while (m_label->getLines().size() > 1) m_label->setScale(m_label->getScale() - 0.5f);
+    CCSprite* icon = nullptr;
+    if (hack && (hack->type == "float" || hack->type == "int")) {
+        icon = CCSprite::create("hashtag.png"_spr);
+        icon->setScale((size.height - iconPad * 2) / icon->getContentHeight());
+        icon->setAnchorPoint(CCPoint(0.0f, 0.0f));
+        icon->setPosition(CCPoint(iconPad, iconPad));
+        icon->setColor({ 150, 150, 150 });
+    }
+
+    float labelPadLeft = 1.0f + size.height;
+    m_label = SimpleTextArea::create(hackName, "PrismMenu.fnt", 0.7f, size.width - labelPadLeft);
+//    while (!hackName.empty() && m_label->getLines().size() > 1) {
+//        hackName.pop_back();
+//        if (hackName.ends_with(' ')) hackName.pop_back();
+//        m_label->setText(hackName + "...");
+//    }
 
     auto anchor = CCPoint(0.0f, 0.5f);
 
     if (!m_label) return false;
     m_label->setAnchorPoint(anchor);
-    m_label->setContentHeight(size.height);
-    //m_label->setAlignment(kCCTextAlignmentLeft);
-    m_label->setPosition(CCPoint(textPadLeft, size.height / 2));
+    m_label->setContentHeight(m_label->getLineHeight());
+    m_label->setPosition(CCPoint(labelPadLeft, size.height / 2));
 
     auto bgNormal = CCSprite::create("square.png", sizeRect);
     auto bgSelected = CCSprite::create("square.png", sizeRect);
@@ -945,30 +950,60 @@ bool PrismDynamicUIButton::init(HackItem* hack) {
 
     if (!m_background) return false;
 
-    if (!hack) {
-        m_label->setColor({ 255, 255, 255 });
-        //m_label->setHorizontalAlignment(kCCTextAlignmentCenter);
-        bgNormal->setColor({ 60, 60, 255 });
-        bgSelected->setColor({ 60, 60, 255 });
-    }
-
     m_background->setAnchorPoint(anchor);
     m_background->setPositionY(size.height / 2);
 
     this->addChild(m_background);
+    if (icon) this->addChild(icon);
     this->addChild(m_label);
 
     this->setContentSize(size);
     this->ignoreAnchorPointForPosition(false);
     this->setAnchorPoint(CCPoint(0.0f, 1.0f));
 
+    this->registerWithTouchDispatcher();
+    this->setTouchEnabled(true);
+
     return true;
 
 }
 
-PrismDynamicUIButton* PrismDynamicUIButton::create(const std::function<void()>& callback) {
-    auto ret = new PrismDynamicUIButton();
-    if (ret && ret->init(nullptr)) {
+bool PrismDynamicUILabel::init(PrismDynamicUIMenu* menu, std::string text) {
+    if (!PrismDynamicUIButton::init(nullptr)) return false;
+    m_menu = menu;
+    m_label->setText(text);
+    m_label->setAlignment(kCCTextAlignmentCenter);
+    typeinfo_cast<CCSprite*>(m_background->getNormalImage())->setColor({ 60, 60, 255 });
+    typeinfo_cast<CCSprite*>(m_background->getSelectedImage())->setColor({ 58, 58, 245 });
+    return true;
+}
+
+bool PrismDynamicUILabel::ccTouchBegan(CCTouch* touch, CCEvent*) {
+    m_dragging = this->boundingBox().containsPoint(touch->getLocation());
+    return true;
+}
+
+void PrismDynamicUILabel::ccTouchEnded(CCTouch* touch, CCEvent*) {
+    if (m_dragging && this->boundingBox().containsPoint(touch->getLocation()))
+        m_dragging = false;
+}
+
+void PrismDynamicUILabel::ccTouchCancelled(CCTouch* p0, CCEvent* p1) {
+    this->ccTouchEnded(p0, p1);
+}
+
+void PrismDynamicUILabel::ccTouchMoved(CCTouch* touch, CCEvent*) {
+    std::stringstream s;
+    s << m_menu->getPositionX() << ", " << m_menu->getPosition(Y) << " vs ";
+    s << touch->getPositionX() << ", " << touch->getPosition(Y);
+    if (m_dragging) m_menu->setPosition(m_menu->getPosition() + touch->getDelta());
+}
+
+
+
+PrismDynamicUILabel* PrismDynamicUILabel::create(PrismDynamicUIMenu* menu, std::string text) {
+    auto ret = new PrismDynamicUILabel();
+    if (ret && ret->init(menu, text)) {
         ret->autorelease();
         return ret;
     }
@@ -990,7 +1025,7 @@ bool PrismDynamicUIMenu::init() {
 
     if (!CCMenu::init()) return false;
 
-    auto head = PrismDynamicUIButton::create([](){});
+    auto head = PrismDynamicUILabel::create(this, "Label");
     if (!head) return false;
     this->addChild(head);
 
