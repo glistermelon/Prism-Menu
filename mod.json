@@ -26,7 +26,10 @@
             		"resources/hacks/README.md",
             		"resources/hacks/*.json",
             		"resources/langs/*.json",
-			"resources/hashtag.png"
+			"resources/hashtag.png",
+			"resources/plus.png",
+			"resources/minus.png",
+			"resources/dropdown.png"
 		],
         "fonts": {
             "PrismMenu": {

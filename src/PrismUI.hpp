@@ -89,15 +89,16 @@ public:
 };
 
 class PrismDynamicUIMenu : public CCMenu {
-    virtual bool init();
+    virtual bool init(std::string);
 public:
     void updateButtons();
-    static PrismDynamicUIMenu* create();
+    static PrismDynamicUIMenu* create(std::string);
 };
 
 class PrismDynamicUILabel : public PrismDynamicUIButton {
     PrismDynamicUIMenu* m_menu;
     bool m_dragging = false;
+
     virtual bool init(PrismDynamicUIMenu*, std::string);
     bool containsPoint(CCPoint);
 public:
@@ -109,6 +110,7 @@ public:
 };
 
 class PrismDynamicUI : public CCLayer {
+    std::vector<PrismDynamicUIMenu*> m_menus;
 protected:
     virtual bool init();
 public:

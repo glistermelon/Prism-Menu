@@ -65,6 +65,7 @@ struct HackItem {
     std::string name;
     std::string desc;
     std::string type;
+    std::string category;
     matjson::Array opcodes;
     HackValue value;
     matjson::Value data = {};
@@ -156,24 +157,31 @@ class Hacks {
         
         for (size_t x = 0; x < 6; x++) {
             std::vector<matjson::Value> jsonArray;
+            std::string category;
             switch (x) {
                 case 0: // Global
                     jsonArray = matjson::parse(Hacks::getGlobalHacks()).as_array();
+                    category = "global";
                     break;
                 case 1: // Player 
                     jsonArray = matjson::parse(Hacks::getPlayerHacks()).as_array();
+                    category = "player";
                     break;
                 case 2: // Bypass
                     jsonArray = matjson::parse(Hacks::getBypassHacks()).as_array();
+                    category = "bypass";
                     break;
                 case 3: // Creator
                     jsonArray = matjson::parse(Hacks::getCreatorHacks()).as_array();
+                    category = "creator";
                     break;
                 case 4: // Misc
                     jsonArray = matjson::parse(Hacks::getMiscHacks()).as_array();
+                    category = "misc";
                     break;
                 case 5: // Settings
                     jsonArray = matjson::parse(Hacks::getSettings()).as_array();
+                    category = "settings";
                     break;
             }
             for (size_t y = 0; y < jsonArray.size(); ++y) {
@@ -194,6 +202,7 @@ class Hacks {
                         obj.get<std::string>("name"),
                         obj.get<std::string>("desc"),
                         obj.get<std::string>("type"),
+                        category,
                         obj.get<matjson::Array>("opcodes"),
                         false
                     };
@@ -250,6 +259,7 @@ class Hacks {
                         obj.get<std::string>("name"),
                         obj.get<std::string>("desc"),
                         obj.get<std::string>("type"),
+                        category,
                         obj.get<matjson::Array>("opcodes"),
                         value
                     };

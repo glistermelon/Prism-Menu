@@ -914,11 +914,17 @@ bool PrismDynamicUIButton::init(HackItem* hack) {
     CCRect sizeRect(0, 0, size.width, size.height);
     float iconPad = 1.2f;
 
-    std::string hackName = hack ? hack->name : "LABEL";
+    std::string hackName = hack ? hack->name : "";
 
     CCSprite* icon = nullptr;
-    if (hack && (hack->type == "float" || hack->type == "int")) {
-        icon = CCSprite::create("hashtag.png"_spr);
+    if (!hack) icon = CCSprite::create("minus.png"_spr);
+    else {
+        if (hack->type == "float" || hack->type == "int")
+            icon = CCSprite::create("hashtag.png"_spr);
+        else if (hack->type == "dropdown")
+            icon = CCSprite::create("dropdown.png"_spr);
+    }
+    if (icon) {
         icon->setScale((size.height - iconPad * 2) / icon->getContentHeight());
         icon->setAnchorPoint(CCPoint(0.0f, 0.0f));
         icon->setPosition(CCPoint(iconPad, iconPad));
@@ -961,37 +967,36 @@ bool PrismDynamicUIButton::init(HackItem* hack) {
     this->ignoreAnchorPointForPosition(false);
     this->setAnchorPoint(CCPoint(0.0f, 1.0f));
 
-    this->registerWithTouchDispatcher();
-    this->setTouchEnabled(true);
-
     return true;
 
 }
 
 bool PrismDynamicUILabel::init(PrismDynamicUIMenu* menu, std::string text) {
+
     if (!PrismDynamicUIButton::init(nullptr)) return false;
+
     m_menu = menu;
     m_label->setText(text);
     m_label->setAlignment(kCCTextAlignmentCenter);
     typeinfo_cast<CCSprite*>(m_background->getNormalImage())->setColor({ 60, 60, 255 });
     typeinfo_cast<CCSprite*>(m_background->getSelectedImage())->setColor({ 58, 58, 245 });
+
+    this->registerWithTouchDispatcher();
+
     return true;
+
 }
 
 bool PrismDynamicUILabel::containsPoint(CCPoint point) {
-    log::debug("CHECKING FOR CONTAINMENT");
-    auto p = convertToWorldSpace(CCPoint(0, 0));
-    log::debug("{} >= {}", point.x, p.x);
-    log::debug("{} <= {}", point.x, p.x + this->getScaledContentSize().width);
-    log::debug("{} >= {}", point.y, p.y);
-    log::debug("{} <= {}", point.y, p.y - this->getScaledContentSize().height);
-    CCRect rect = { .origin = p, .size = this->getScaledContentSize() }
-    return rect.containsPoint(point);
+    return CCRect {
+        convertToWorldSpace(CCPoint(0, 0)),
+        this->getScaledContentSize()
+    }.containsPoint(point);
 }
 
 bool PrismDynamicUILabel::ccTouchBegan(CCTouch* touch, CCEvent*) {
     m_dragging = this->containsPoint(touch->getLocation());
-    return true;
+    return m_dragging;
 }
 
 void PrismDynamicUILabel::ccTouchEnded(CCTouch* touch, CCEvent*) {
@@ -1006,8 +1011,6 @@ void PrismDynamicUILabel::ccTouchCancelled(CCTouch* p0, CCEvent* p1) {
 void PrismDynamicUILabel::ccTouchMoved(CCTouch* touch, CCEvent*) {
     if (m_dragging) m_menu->setPosition(m_menu->getPosition() + touch->getDelta());
 }
-
-
 
 PrismDynamicUILabel* PrismDynamicUILabel::create(PrismDynamicUIMenu* menu, std::string text) {
     auto ret = new PrismDynamicUILabel();
@@ -1029,11 +1032,11 @@ PrismDynamicUIButton* PrismDynamicUIButton::create(HackItem* hack) {
     return nullptr;
 }
 
-bool PrismDynamicUIMenu::init() {
+bool PrismDynamicUIMenu::init(std::string name) {
 
     if (!CCMenu::init()) return false;
 
-    auto head = PrismDynamicUILabel::create(this, "Label");
+    auto head = PrismDynamicUILabel::create(this, name);
     if (!head) return false;
     this->addChild(head);
 
@@ -1067,9 +1070,9 @@ void PrismDynamicUIMenu::updateButtons() {
 
 }
 
-PrismDynamicUIMenu* PrismDynamicUIMenu::create() {
+PrismDynamicUIMenu* PrismDynamicUIMenu::create(std::string name) {
     auto ret = new PrismDynamicUIMenu();
-    if (ret && ret->init()) {
+    if (ret && ret->init(name)) {
         ret->autorelease();
         return ret;
     }
@@ -1081,18 +1084,28 @@ bool PrismDynamicUI::init() {
     if (!CCLayer::init()) return false;
     this->setID("prism-menu");
 
-    auto menu = PrismDynamicUIMenu::create();
-    if (!menu) return false;
-    menu->setPosition(CCScene::get()->getContentSize() / 2);
+    std::map<std::string, std::vector<HackItem*>> hacks;
+    for (auto& hack : allHacks) hacks[hack.category].push_back(&hack);
 
-    for (auto& hack : allHacks) {
-        auto button = PrismDynamicUIButton::create(&hack);
-        if (!button) return false;
-        menu->addChild(button);
+    for (const auto& it : hacks) {
+
+        std::string category = it.first;
+        category[0] -= ('a' - 'A'); // capitalize first letter
+        auto menu = PrismDynamicUIMenu::create(category);
+        if (!menu) return false;
+        menu->setPosition(CCScene::get()->getContentSize() / 2);
+
+        for (const auto& hack : it.second) {
+            auto button = PrismDynamicUIButton::create(hack);
+            if (!button) return false;
+            menu->addChild(button);
+        }
+
+        menu->updateButtons();
+        m_menus.push_back(menu);
+        this->addChild(menu);
+
     }
-    menu->updateButtons();
-
-    this->addChild(menu);
 
     return true;
 }
