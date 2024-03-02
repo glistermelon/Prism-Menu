@@ -85,7 +85,7 @@ protected:
     HackItem* m_hack;
 
     void onClick(CCObject*);
-    template <class T> T promptForNum() { return 5; }
+    template <class T> T promptForNum();
     virtual bool init(HackItem*);
 public:
     static PrismDynamicUIButton* create(HackItem* hack);
@@ -99,17 +99,18 @@ public:
 };
 
 class PrismDynamicUILabel : public PrismDynamicUIButton {
-    PrismDynamicUIMenu* m_menu;
+    CCNode* m_node;
     bool m_dragging = false;
 
-    virtual bool init(PrismDynamicUIMenu*, std::string);
+    virtual bool init(CCNode*, std::string);
     bool containsPoint(CCPoint);
 public:
+    void setWidth(float);
     virtual bool ccTouchBegan(CCTouch*, CCEvent*);
     virtual void ccTouchEnded(CCTouch*, CCEvent*);
     virtual void ccTouchCancelled(CCTouch*, CCEvent*);
     virtual void ccTouchMoved(CCTouch*, CCEvent*);
-    static PrismDynamicUILabel* create(PrismDynamicUIMenu*, std::string);
+    static PrismDynamicUILabel* create(CCNode*, std::string);
 };
 
 class PrismDynamicUI : public CCLayer {
