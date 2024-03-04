@@ -905,47 +905,62 @@ PrismUIButton* PrismUIButton::create(HackItem* hack, Lang* lang) {
 template <class T> T PrismDynamicUIButton::promptForNum() {
 
     CCMenu* menu = CCMenu::create();
-    menu->setContentSize(CCSize(100.0f, 100.0f));
+    menu->setContentSize(CCSize(100.0f, 0.0f));
     menu->setAnchorPoint(CCPoint(0.5f, 0.5f));
     menu->ignoreAnchorPointForPosition(false);
 
     auto label = PrismDynamicUILabel::create(menu, "Input Number");
     label->setWidth(menu->getContentWidth());
     label->m_label->setAlignment(kCCTextAlignmentCenter);
-    label->setPosition(CCPoint(0, menu->getContentHeight()));
+
+    auto input = TextInput::create(100.0f, "", "PrismMenu.fnt"_spr);
+    input->setScale(10.0f / input->getContentHeight());
+    input->setWidth(menu->getContentWidth() / input->getScale());
+    //input->setContentWidth(menu->getContentWidth() / input->getScale());
+    //input->updateLayout();
+
+    auto slider = Slider::create(nullptr, nullptr, "","slider.png"_spr,"circle.png","circle.png", 1.0f);
+    typeinfo_cast<CCNode*>(slider->m_groove->getChildren()->objectAtIndex(0))->setVisible(false);
+    auto sliderWrap = CCNode::create();
+    sliderWrap->addChild(slider);
+    auto sliderThumb = slider->getThumb();
+    slider->setValue(0.0f);
+    float sliderHeight = sliderThumb->getContentHeight();
+    float sliderWidth = 2.0f * std::abs(sliderThumb->getPositionX());
+    float sliderScale = (menu->getContentWidth() - sliderThumb->getContentWidth()) / sliderWidth;
+    slider->setScaleX(sliderScale);
+    sliderThumb->setScaleX(1 / sliderScale);
+    sliderWrap->setContentSize(CCSize(sliderWidth * sliderScale + sliderThumb->getContentWidth(), sliderHeight));
+    slider->setPosition(
+            sliderWrap->getContentWidth() / 2 - (1 - sliderScale) * slider->getContentWidth() / 2,
+            sliderWrap->getContentHeight() / 2
+    );
+
+    menu->addChild(label);
+    menu->addChild(input);
+    menu->addChild(sliderWrap);
+
+    // using a layout is more complicated and more code than this, so I'm just not bothering
+    std::vector<CCNode*> children;
+    for (int i = 0; i < menu->getChildrenCount(); ++i)
+        children.push_back(typeinfo_cast<CCNode*>(menu->getChildren()->objectAtIndex(i)));
+    for (auto& child : children) child->setAnchorPoint(CCPoint(0.0f, 0.5f));
+    menu->alignItemsVerticallyWithPadding(0.0f);
+    menu->setContentHeight(label->getPositionY() - sliderWrap->getPositionY() + sliderWrap->getScaledContentSize().height);
+    for (auto& child : children) {
+        child->setPositionY(child->getPositionY() + menu->getContentHeight() / 2);
+        child->setZOrder(5);
+    }
 
     auto bg = CCSprite::create(
             "square.png",
             CCRect { CCPoint(0, 0), menu->getContentSize() }
     );
     bg->setColor({ 50, 50, 50 });
-    bg->setAnchorPoint(CCPoint(0.0f, 1.0f));
-    bg->ignoreAnchorPointForPosition(true);
-    bg->setPosition(CCPoint(0, 0));
-
+    bg->setAnchorPoint(CCPoint(0.0f, 0.0f));
+    bg->setPosition(CCPoint(0.0f, 0.0f));
+    bg->setZOrder(4);
     menu->addChild(bg);
-
-    // part 2
-
-    auto innerMenu = CCMenu::create();
-    innerMenu->setAnchorPoint(CCPoint(0.0f, 0.0f));
-    innerMenu->setPosition(CCPoint(0.0f, 0.0f));
-    innerMenu->setContentSize(menu->getContentSize());
-
-    auto inc = CCSprite::create("plus.png"_spr);
-    auto dec = CCSprite::create("minus.png"_spr);
-
-    label->setAnchorPoint(CCPoint(0.5f, 0.5f));
-
-    innerMenu->addChild(dec);
-    innerMenu->addChild(inc);
-    innerMenu->addChild(label);
-    
-    innerMenu->alignItemsVerticallyWithPadding(0.0f);
-
-    menu->addChild(innerMenu);
-
-    // finish
 
     CCScene::get()->addChild(menu);
 
@@ -979,7 +994,9 @@ void PrismDynamicUIButton::onClick(CCObject*) {
         m_label->setColor({ 255, 255, 255, 255});
         if (m_icon) m_icon->setColor({ 150, 150, 150 });
     }
-}
+}; // todo delete this semicolon
+
+#include <Windows.h>
 
 bool PrismDynamicUIButton::init(HackItem* hack) {
 
@@ -1010,7 +1027,10 @@ bool PrismDynamicUIButton::init(HackItem* hack) {
     }
 
     float labelPadLeft = 1.0f + size.height;
-    m_label = SimpleTextArea::create(hackName, "PrismMenu.fnt", 0.7f, size.width - labelPadLeft);
+    m_label = SimpleTextArea::create(hackName, "PrismMenu-20pt.fnt"_spr, 1.0f, size.width - labelPadLeft);
+
+    auto test = CCLabelTTF::create(hackName.c_str(), "PrismMenu.ttf"_spr, 20.0f);
+    this->addChild(test);
 
     auto anchor = CCPoint(0.0f, 0.5f);
 

@@ -20,23 +20,24 @@
             "resources/checkmark-hd.png",
             "resources/checkmark-uhd.png",
             		"resources/Screenshot2.png",
-            		"resources/PrismMenu.otf",
-            		"resources/Hack-Regular.ttf",
             		"resources/themes.json",
             		"resources/hacks/README.md",
             		"resources/hacks/*.json",
             		"resources/langs/*.json",
-			"resources/hashtag.png",
-			"resources/plus.png",
-			"resources/minus.png",
-			"resources/dropdown.png"
+			"resources/*.png",
+			"resources/PrismMenu.ttf"
 		],
         "fonts": {
             "PrismMenu": {
-                "path": "resources/PrismMenu.otf",
+                "path": "resources/PrismMenu.ttf",
                 "size": 128,
                 "charset": "21-383,507-513,898-1500"
-            }
+            },
+			"PrismMenu-20pt": {
+				"path": "resources/PrismMenu.ttf",
+				"size": 20,
+				"charset": "21-383,507-513,898-1500"
+			}
         }
 	},
     	"settings": {

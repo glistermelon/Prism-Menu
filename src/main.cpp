@@ -112,6 +112,9 @@ class $modify(CCKeyboardDispatcher) {
                     //PrismUI::create()->show();
                     auto p = PrismDynamicUI::create();
                     CCScene::get()->addChild(p);
+
+
+
                 } else {
                     //static_cast<PrismUI*>(prismUIExists)->onClose(CCNode::create());
                 }
